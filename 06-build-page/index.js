@@ -21,30 +21,64 @@ fs.promises.mkdir(path.join(__dirname, 'project-dist'))
   .then(() => console.log('Directory created successfully'))
   .catch(() => console.log('Error!'));
 
-getFiles(path.join(__dirname, 'components'))
-  .then((data) => {
-    result = {};
-    let keys = data.map(async (element) => {
-      return (path.basename(element, path.extname(element)));
-    })
-    let defs = data.map(async (element) => {
+async function getHTML(data) {
+  let keys = data.map((element) => {
+    return path.basename(element, path.extname(element));
+  })
+  let defs = data.map(async(element) => {
       return await fs.promises.readFile(element, 'utf-8')
     })
-      return Promise.all(defs);
-  }).then((data) => {
-    /* let result = {};
-    keys.forEach((key, i) => result[key] = data[i]); */
-    console.log(data);
-    // console.log(data);
+  return Promise.all(defs).then((data) => {
+    let result = {};
+    keys.forEach((key, i) => result[key] = data[i]);
+    return result;
+});
+}
+
+function generateHtml(inputData, pathToTemplate) {
+  return fs.promises.readFile(pathToTemplate, 'utf-8')
+    .then((fileContent) => {
+      fileContent = fileContent.replace(/\{\{header\}\}/, inputData.header);
+      fileContent = fileContent.replace(/\{\{articles\}\}/, inputData.articles);
+      fileContent = fileContent.replace(/\{\{footer\}\}/, inputData.footer);
+      return fileContent;
+    })
+}
+
+function checkFileExtension(arrayOfFiles, extension) {
+  let arrayOutput = []
+  arrayOutput = arrayOfFiles.map((item) => {
+    if (path.extname(item) == `.${extension}`) {
+     return item;
+    }
+  }).filter((item) => item);
+  return arrayOutput;
+}
+
+function writeFile(pathToFile, data) {
+  let writeStream = fs.createWriteStream(path.join(pathToFile, 'index.html'), 'utf8');
+   writeStream.write(data);
+}
+
+
+getFiles(path.join(__dirname, 'components'))
+  .then((data) => {
+   return checkFileExtension(data, 'html')
   })
+  .then((data) => {
+    return getHTML(data);
+  }).then((data) => {
+    return generateHtml(data, (path.join(__dirname, 'template.html')));
+  }).then((data) => {
+    writeFile(path.join(__dirname, 'project-dist'), data);
+  })
+   // console.log(data);
+    // console.log(data);
 
   .catch((error) => console.log(error));
 
 
 //htmlComponents[path.basename(element, path.extname(element))] = fileContent;
-
-
-
 
 /* fs.promises.readFile(path.join(__dirname, 'template.html'), 'utf8')
   .then((fileContent) => {
