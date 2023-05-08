@@ -13,14 +13,17 @@ async function getFiles(dir) { // create filelist to copy
   return Array.prototype.concat(...files); // all path to massive
 }
 
+//remove dir if exist
 fs.promises.rmdir(path.join(__dirname, 'project-dist'))
   .then(() => console.log('Directory removed successfully'))
   .catch(() => console.log('Error!'));
 
+//create dir
 fs.promises.mkdir(path.join(__dirname, 'project-dist'))
   .then(() => console.log('Directory created successfully'))
   .catch(() => console.log('Error!'));
 
+// download html from folder 'components'
 async function getHTML(data) {
   let keys = data.map((element) => {
     return path.basename(element, path.extname(element));
@@ -35,6 +38,7 @@ async function getHTML(data) {
 });
 }
 
+// generate index.html
 function generateHtml(inputData, pathToTemplate) {
   return fs.promises.readFile(pathToTemplate, 'utf-8')
     .then((fileContent) => {
@@ -45,6 +49,7 @@ function generateHtml(inputData, pathToTemplate) {
     })
 }
 
+// check file extension
 function checkFileExtension(arrayOfFiles, extension) {
   let arrayOutput = []
   arrayOutput = arrayOfFiles.map((item) => {
@@ -55,12 +60,13 @@ function checkFileExtension(arrayOfFiles, extension) {
   return arrayOutput;
 }
 
+// write file to destination
 function writeFile(pathToFile, data) {
   let writeStream = fs.createWriteStream(path.join(pathToFile, 'index.html'), 'utf8');
    writeStream.write(data);
 }
 
-
+// work with HTML files
 getFiles(path.join(__dirname, 'components'))
   .then((data) => {
    return checkFileExtension(data, 'html')
@@ -72,27 +78,13 @@ getFiles(path.join(__dirname, 'components'))
   }).then((data) => {
     writeFile(path.join(__dirname, 'project-dist'), data);
   })
-   // console.log(data);
-    // console.log(data);
 
   .catch((error) => console.log(error));
 
+// work with CSS files
 
-//htmlComponents[path.basename(element, path.extname(element))] = fileContent;
+// copy folder 'assets'
 
-/* fs.promises.readFile(path.join(__dirname, 'template.html'), 'utf8')
-  .then((fileContent) => {
-    fileContent.replace(/\{\{header\}\}/, fileContentHeader);
-  })
-  .catch(() => console.log('Error!')); */
-
- /*  fs.promises.readFile(path.join(__dirname, 'template.html'), 'utf8')
-  .then((fileContent) => {
-    fileContent.replace(/\{\{header\}\}/, htmlComponents.header);
-    fileContent.replace(/\{\{footer\}\}/, htmlComponents.footer);
-    fileContent.replace(/\{\{articles\}\}/, htmlComponents.articles);
-    console.log(fileContent);
-    return fileContent; */
 
 
 /* getFiles(startDir)
