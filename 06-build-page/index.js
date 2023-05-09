@@ -14,50 +14,30 @@ async function getFiles(dir) { // create filelist to copy
   return Array.prototype.concat(...files); // all path to massive
 }
 
-//remove dir if exist
-/* fs.promises.rmdir(path.join(distDir, 'assets'))
-  .then(() => console.log('Directory removed successfully'))
-  .catch((error) => console.log(error)); */
-
-
-
-// clear css
-/* fs.truncate((path.join(distDir, 'style.css')), err => {
-  if(err) throw err; // не удалось очистить файл
-   console.log('style.css успешно очищен');
-}); */
-
-//create dir
-fs.stat(distDir, function(err, stats) {
-  if (err) {
-    fs.promises.mkdir(path.join(__dirname, 'project-dist'))
-    .then(() => console.log('Folder created successfully'))
-    .catch((error) => console.log(error));
-  } else {
-      console.log("Folder exists");
-  }
-});
-
-// clear html css
-fs.stat(path.join(distDir, 'style.css'), function(err, stats) {
-  if (err) {
-  } else {
-    fs.truncate((path.join(distDir, 'style.css')), err => {
-      if(err) throw err; // не удалось очистить файл
-       console.log('style.css успешно очищен');
+//remove all files in folder
+function clearAndWriteDestination(dir) {
+  fs.access(dir, function(error){
+    if (error) {
+      fs.promises.mkdir(dir)
+      .then(() => console.log('Directory created successfully'))
+      .catch((error) => console.log(error));
+    } else {
+      getFiles(dir)
+      .then(function(files){
+        files.forEach(element => {
+          fs.promises.unlink(element, path.join(dir, path.basename(element)));
+          console.log('File removed successfully')
+        });
+      }).then(() => {
+        packHTML();
+        packStyles();
+      })
+      .catch((err) => console.error(err));
     }
-  )}
-});
+  });
+}
 
-fs.stat(path.join(distDir, 'index.html'), function(err, stats) {
-  if (err) {
-  } else {
-    fs.truncate((path.join(distDir, 'index.html')), err => {
-      if(err) throw err; // не удалось очистить файл
-       console.log('index.html успешно очищен');
-    }
-  )}
-});
+clearAndWriteDestination(distDir);
 
 // download html from folder 'components'
 async function getHTML(data) {
@@ -96,40 +76,35 @@ function checkFileExtension(arrayOfFiles, extension) {
   return arrayOutput;
 }
 
-// write file to destination
-function writeFile(pathToFile, data) {
-  let writeStream = fs.createWriteStream(path.join(pathToFile, 'index.html'), 'utf8');
-   writeStream.write(data);
-}
-
-// work with HTML files
-getFiles(path.join(__dirname, 'components'))
-  .then((data) => {
-   return checkFileExtension(data, 'html')
-  })
-  .then((data) => {
-    return getHTML(data);
-  }).then((data) => {
-    return generateHtml(data, (path.join(__dirname, 'template.html')));
-  }).then((data) => {
-    writeFile(path.join(__dirname, 'project-dist'), data);
-  })
-
-  .catch((error) => console.log(error));
-
 // work with CSS files
-
-getFiles(stylesDir)
+function packStyles() {
+  getFiles(stylesDir)
   .then((files) => {
     let writeStream = fs.createWriteStream(path.join(distDir, 'style.css'), 'utf8');
       files.forEach(element => {
         if (path.extname(element) === '.css') {
         let readableStream = fs.createReadStream(element, 'utf8');
         readableStream.on('data', (chunk) => writeStream.write(chunk));
+        console.log('write');
       }
     });
-    console.log('bundle is OK');
   })
-  .catch(err => console.error(err));
+  .catch((err) => console.error(err));
+}
 
-// copy folder 'assets'
+// work with HTML files
+function packHTML() {
+  getFiles(path.join(__dirname, 'components'))
+  .then((data) => {
+  return checkFileExtension(data, 'html')
+  })
+  .then((data) => {
+    return getHTML(data);
+  }).then((data) => {
+    return generateHtml(data, (path.join(__dirname, 'template.html')));
+  }).then((data) => {
+    let writeStream = fs.createWriteStream(path.join(distDir, 'index.html'), 'utf8');
+    writeStream.write(data);
+  })
+  .catch((error) => console.log(error));
+}
