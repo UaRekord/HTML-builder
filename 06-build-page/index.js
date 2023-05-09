@@ -1,7 +1,8 @@
 const { resolve } = require('path');
 const fs = require('fs');
 const path = require('node:path');
-const startDir = path.join(__dirname, 'styles');
+const stylesDir = path.join(__dirname, 'styles');
+const distDir = path.join(__dirname, 'project-dist');
 
 async function getFiles(dir) { // create filelist to copy
   const dirents = await fs.promises.readdir(dir, { withFileTypes: true });
@@ -14,14 +15,26 @@ async function getFiles(dir) { // create filelist to copy
 }
 
 //remove dir if exist
-fs.promises.rmdir(path.join(__dirname, 'project-dist'))
+/* fs.promises.rmdir(path.join(distDir, 'assets'))
   .then(() => console.log('Directory removed successfully'))
-  .catch(() => console.log('Error!'));
+  .catch((error) => console.log(error)); */
+
+// clear html
+fs.truncate((path.join(distDir, 'index.html')), err => {
+  if(err) throw err; // не удалось очистить файл
+   console.log('index.html успешно очищен');
+});
+
+// clear css
+fs.truncate((path.join(distDir, 'style.css')), err => {
+  if(err) throw err; // не удалось очистить файл
+   console.log('style.css успешно очищен');
+});
 
 //create dir
-fs.promises.mkdir(path.join(__dirname, 'project-dist'))
+/* fs.promises.mkdir(path.join(__dirname, 'project-dist'))
   .then(() => console.log('Directory created successfully'))
-  .catch(() => console.log('Error!'));
+  .catch((error) => console.log(error)); */
 
 // download html from folder 'components'
 async function getHTML(data) {
@@ -83,9 +96,20 @@ getFiles(path.join(__dirname, 'components'))
 
 // work with CSS files
 
+getFiles(stylesDir)
+  .then((files) => {
+    let writeStream = fs.createWriteStream(path.join(distDir, 'style.css'), 'utf8');
+      files.forEach(element => {
+        if (path.extname(element) === '.css') {
+        let readableStream = fs.createReadStream(element, 'utf8');
+        readableStream.on('data', (chunk) => writeStream.write(chunk));
+      }
+    });
+    console.log('bundle is OK');
+  })
+  .catch(err => console.error(err));
+
 // copy folder 'assets'
-
-
 
 /* getFiles(startDir)
   .then((files) => {
