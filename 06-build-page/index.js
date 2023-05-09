@@ -19,22 +19,45 @@ async function getFiles(dir) { // create filelist to copy
   .then(() => console.log('Directory removed successfully'))
   .catch((error) => console.log(error)); */
 
-// clear html
-fs.truncate((path.join(distDir, 'index.html')), err => {
-  if(err) throw err; // не удалось очистить файл
-   console.log('index.html успешно очищен');
-});
+
 
 // clear css
-fs.truncate((path.join(distDir, 'style.css')), err => {
+/* fs.truncate((path.join(distDir, 'style.css')), err => {
   if(err) throw err; // не удалось очистить файл
    console.log('style.css успешно очищен');
-});
+}); */
 
 //create dir
-/* fs.promises.mkdir(path.join(__dirname, 'project-dist'))
-  .then(() => console.log('Directory created successfully'))
-  .catch((error) => console.log(error)); */
+fs.stat(distDir, function(err, stats) {
+  if (err) {
+    fs.promises.mkdir(path.join(__dirname, 'project-dist'))
+    .then(() => console.log('Folder created successfully'))
+    .catch((error) => console.log(error));
+  } else {
+      console.log("Folder exists");
+  }
+});
+
+// clear html css
+fs.stat(path.join(distDir, 'style.css'), function(err, stats) {
+  if (err) {
+  } else {
+    fs.truncate((path.join(distDir, 'style.css')), err => {
+      if(err) throw err; // не удалось очистить файл
+       console.log('style.css успешно очищен');
+    }
+  )}
+});
+
+fs.stat(path.join(distDir, 'index.html'), function(err, stats) {
+  if (err) {
+  } else {
+    fs.truncate((path.join(distDir, 'index.html')), err => {
+      if(err) throw err; // не удалось очистить файл
+       console.log('index.html успешно очищен');
+    }
+  )}
+});
 
 // download html from folder 'components'
 async function getHTML(data) {
@@ -110,16 +133,3 @@ getFiles(stylesDir)
   .catch(err => console.error(err));
 
 // copy folder 'assets'
-
-/* getFiles(startDir)
-  .then((files) => {
-    let writeStream = fs.createWriteStream(path.join(__dirname, 'project-dist\\bundle.css'), 'utf8');
-      files.forEach(element => {
-        if (path.extname(element) === '.css') {
-        let readableStream = fs.createReadStream(element, 'utf8');
-        readableStream.on('data', (chunk) => writeStream.write(chunk));
-      }
-    });
-    console.log('bundle is OK');
-  })
-  .catch(err => console.error(err)); */
