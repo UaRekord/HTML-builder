@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('node:path');
 const stylesDir = path.join(__dirname, 'styles');
 const distDir = path.join(__dirname, 'project-dist');
+const assets = path.join(__dirname, 'assets');
 
 async function getFiles(dir) { // create filelist to copy
   const dirents = await fs.promises.readdir(dir, { withFileTypes: true });
@@ -20,17 +21,23 @@ function clearAndWriteDestination(dir) {
     if (error) {
       fs.promises.mkdir(dir)
       .then(() => console.log('Directory created successfully'))
+      .then(() => {
+        packStyles();
+        packHTML();
+      })
       .catch((error) => console.log(error));
     } else {
       getFiles(dir)
       .then(function(files){
         files.forEach(element => {
           fs.promises.unlink(element, path.join(dir, path.basename(element)));
-          console.log('File removed successfully')
+          console.log('File removed successfully');
         });
       }).then(() => {
         packHTML();
         packStyles();
+      }).then(() => {
+      //  copyFolder(assets, distDir);
       })
       .catch((err) => console.error(err));
     }
@@ -38,7 +45,7 @@ function clearAndWriteDestination(dir) {
 }
 
 clearAndWriteDestination(distDir);
-
+copyFolder(assets, distDir);
 // download html from folder 'components'
 async function getHTML(data) {
   let keys = data.map((element) => {
@@ -55,7 +62,7 @@ async function getHTML(data) {
 }
 
 // generate index.html
-function generateHtml(inputData, pathToTemplate) {
+async function generateHtml(inputData, pathToTemplate) {
   return fs.promises.readFile(pathToTemplate, 'utf-8')
     .then((fileContent) => {
       fileContent = fileContent.replace(/\{\{header\}\}/, inputData.header);
@@ -85,9 +92,9 @@ function packStyles() {
         if (path.extname(element) === '.css') {
         let readableStream = fs.createReadStream(element, 'utf8');
         readableStream.on('data', (chunk) => writeStream.write(chunk));
-        console.log('write');
       }
     });
+    console.log('write CSS');
   })
   .catch((err) => console.error(err));
 }
@@ -105,6 +112,35 @@ function packHTML() {
   }).then((data) => {
     let writeStream = fs.createWriteStream(path.join(distDir, 'index.html'), 'utf8');
     writeStream.write(data);
+    console.log('write HTML');
+  })
+  .catch((error) => console.log(error));
+}
+
+function copyFolder(startFolder, destinationFolder) {
+  getFiles(startFolder)
+  .then((files) => {
+     let destinationArray = files.map((file) => {
+      return path.join(destinationFolder, file.slice(__dirname.length));
+    })
+    let folderArray = files.map((file) => {
+      return path.dirname(path.join(destinationFolder, file.slice(__dirname.length)));
+    })
+    folderArray = Array.from(new Set(folderArray));
+    folderArray.forEach((folder) => {
+      fs.mkdir(folder, { recursive: true }, error => {
+        if (error) { throw error; }
+        });
+      })
+
+    files.forEach(element => {
+      fs.readFile(element, (err, data) => {
+        if (err) throw err;
+          fs.writeFile(destinationArray[files.indexOf(element)], data, (err) => {
+            if (err) throw err;
+        });
+      });
+    });
   })
   .catch((error) => console.log(error));
 }
