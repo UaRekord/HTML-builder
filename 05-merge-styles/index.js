@@ -2,7 +2,6 @@ const { resolve } = require('path');
 const fs = require('fs');
 const path = require('node:path');
 const startDir = path.join(__dirname, 'styles');
-const destinationDir = path.join(__dirname, 'project-dist');
 
 async function getFiles(dir) { // create filelist to copy
   const dirents = await fs.promises.readdir(dir, { withFileTypes: true });
@@ -15,7 +14,7 @@ async function getFiles(dir) { // create filelist to copy
 }
 
 getFiles(startDir)
-  .then(function(files){
+  .then(function(files) {
     let writeStream = fs.createWriteStream(path.join(__dirname, 'project-dist\\bundle.css'), 'utf8');
     files.forEach(element => {
       if (path.extname(element) === '.css') {
